@@ -1,7 +1,10 @@
 import fs from 'node:fs'
 import Multifeed from "multifeed"
-import crypto from 'hypercore-crypto'
 import { ZipFile } from 'yazl'
+import {
+  multiReady,
+  addMigrationMetadata,
+} from './utils.js'
 
 // TODO: how to save attachments? (they live on srcPath/media/{preview, original, thumbnail}
 
@@ -40,48 +43,3 @@ export async function MLEFWriter(srcPath, destPath){
   }
   zip.end()
 }
-
-async function addMigrationMetadata(core){
-  return {
-    rootHashChecksum: crypto.tree(await getRootHash(core)).toString('hex'),
-    signature: (await getCoreSignature(core)).toString('hex'),
-    coreKey: core.key.toString('hex'),
-    blockIndex: core.length
-  }
-}
-
-/**
- * @returns {Promise<Buffer>}
-*/
-function getCoreSignature(core){
-  return new Promise((resolve,reject) => {
-    core.signature((err,sig) => {
-      if(err) return reject(err)
-      resolve(sig.signature)
-    })
-  })
-}
-
-/**
- * @returns {Promise<Buffer>}
-*/
-function getRootHash(core){
-  return new Promise((resolve,reject) => {
-    core.rootHashes(0, (err,roots) => {
-      if(err) return reject(err)
-      resolve(roots)
-    })
-  })
-}
-
-function multiReady(multi){
-  return new Promise((resolve, reject) => {
-    // TODO: ready cb returns two params: a num and a function...
-    multi.ready(() => {
-      //if(err) return reject(err)
-      resolve()
-    })
-  })
-}
-
-
