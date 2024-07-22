@@ -22,9 +22,6 @@ export async function MLEFWriter(srcPath, destPath){
 
     for(const core of multi.feeds()){
       const stream = core.createReadStream()
-      //if(core.length > 0){
-      //  console.log(migrationMetadata)
-      //}
       for await(const doc of stream){
         const version =  doc.version?.split('@')[1]
         // TODO: use better default version than '_'
@@ -34,7 +31,7 @@ export async function MLEFWriter(srcPath, destPath){
           doc.migrationMetadata = await addMigrationMetadata(core)
           zip.addBuffer(JSON.stringify(doc, null,4), `docs/${filename}`)
         }catch(e){
-          console.log('e', e)
+          console.error('error creating migration metadata', e)
         }
       }
     }
