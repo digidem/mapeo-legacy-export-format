@@ -74,7 +74,7 @@ async function* writeFeeds(multi) {
  * @param {typeof import('../types/multifeed.d.ts')} core
  * @param {Record<string,unknown>} doc
  */
-export async function addMigrationMetadata(core, doc) {
+async function addMigrationMetadata(core, doc) {
   return {
     rootHashChecksum: crypto.tree(await getRootHash(core)).toString("hex"),
     signature: (await getCoreSignature(core)).toString("hex"),
@@ -89,7 +89,7 @@ export async function addMigrationMetadata(core, doc) {
  * @param {typeof import('multifeed')} multi
  * @returns {Promise<void>}
  */
-export function multiReady(multi) {
+function multiReady(multi) {
   return new Promise((resolve) => {
     // TODO: ready cb returns two params: a num and a function...
     multi.ready(() => {
