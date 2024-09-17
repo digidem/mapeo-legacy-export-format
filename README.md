@@ -1,8 +1,6 @@
 #
 
 ## TODO:
-* migrationMetadata
-* save attachments
 * MLEFReader
 * automatically generated fields:
     2. timestamp -> rename to updatedAt?

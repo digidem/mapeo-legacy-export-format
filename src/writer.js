@@ -8,8 +8,6 @@ import {
   addMigrationMetadata,
 } from './utils.js'
 
-// TODO: how to save attachments? (they live on srcPath/media/{preview, original, thumbnail}
-
 /**
  * @param {String} srcPath path to `kappa.db` folder
  * @param {String} [destPath] path file to save
@@ -20,22 +18,18 @@ export default async function MLEFWriter(srcPath, destPath = 'output.mlef'){
   const feedsPath = 'docs'
   const mediaPath = 'media'
 
-  try{
-    await multiReady(multi)
-    const zipFile = fs.createWriteStream(destPath)
-    zip.outputStream.pipe(zipFile).on("close", function() {
-      console.log(`mlef file writen to ${destPath}`);
-    });
-    const feeds = writeFeeds(multi)
-    const media = writeAttachments(srcPath)
-    for await(const {file,filename} of media){
-      zip.addBuffer(file, join(mediaPath,filename))
-    }
-    for await(const {doc, filename} of feeds){
-      zip.addBuffer(JSON.stringify(doc, null,4), join(feedsPath,filename))
-    }
-  }catch(e){
-    console.error('error reading multifeed', e)
+  await multiReady(multi)
+  const zipFile = fs.createWriteStream(destPath)
+  zip.outputStream.pipe(zipFile).on("close", function() {
+    console.log(`mlef file writen to ${destPath}`);
+  });
+  const feeds = writeFeeds(multi)
+  const media = writeAttachments(srcPath)
+  for await(const {file,filename} of media){
+    zip.addBuffer(file, join(mediaPath,filename))
+  }
+  for await(const {doc, filename} of feeds){
+    zip.addBuffer(JSON.stringify(doc, null,4), join(feedsPath,filename))
   }
   zip.end()
 }
@@ -49,7 +43,7 @@ async function *writeAttachments(srcPath){
     if(fileOrDir.isFile()){
       const file = await readFile(join(fileOrDir.parentPath, fileOrDir.name))
       const filename = join(relative(srcPath,fileOrDir.parentPath),fileOrDir.name)
-      yield {filename, file}
+      yield { filename, file }
     }
   }
 }
