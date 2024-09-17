@@ -69,8 +69,6 @@ async function *writeFeeds(multi){
       }catch(e){
         console.error('error creating migration metadata', e)
       }
-
-
     }
   }
 }
