@@ -5,7 +5,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node --test test"
+    "test": "node --test test",
+    "patch": "patch-package simple-hypercore-protocol"
   },
   "keywords": [],
   "author": "",
@@ -14,5 +15,8 @@
     "hypercore-crypto": "^3.4.2",
     "multifeed": "^6.0.0",
     "yazl": "^2.5.1"
+  },
+  "devDependencies": {
+    "patch-package": "^8.0.0"
   }
 }
