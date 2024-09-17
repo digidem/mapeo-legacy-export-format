@@ -3,4 +3,4 @@
 import { MLEFWriter } from "../src/index.js";
 
 const dbPath = new URL('./fixture/db1/',import.meta.url).pathname
-MLEFWriter(dbPath)
+await MLEFWriter(dbPath)

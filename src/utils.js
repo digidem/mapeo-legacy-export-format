@@ -1,11 +1,13 @@
 import crypto from 'hypercore-crypto'
 
-export async function addMigrationMetadata(core){
+export async function addMigrationMetadata(core, doc){
   return {
     rootHashChecksum: crypto.tree(await getRootHash(core)).toString('hex'),
     signature: (await getCoreSignature(core)).toString('hex'),
     coreKey: core.key.toString('hex'),
-    blockIndex: core.length
+    blockIndex: core.length,
+    created_at: doc.created_at,
+    timestamp: doc.timestamp
   }
 }
 
