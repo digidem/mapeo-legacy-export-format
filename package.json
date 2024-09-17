@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "test": "node --test test",
-    "patch": "patch-package simple-hypercore-protocol"
+    "patch": "patch-package simple-hypercore-protocol",
+    "build:tsc": "tsc"
   },
   "keywords": [],
   "author": "",
