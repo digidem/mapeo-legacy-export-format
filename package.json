@@ -7,7 +7,9 @@
   "scripts": {
     "test": "node --test test",
     "patch": "patch-package simple-hypercore-protocol",
-    "build:tsc": "tsc"
+    "tsc": "tsc",
+    "prettier": "prettier --check .",
+    "lint": "eslint --cache ."
   },
   "keywords": [],
   "author": "",
