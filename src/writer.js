@@ -1,6 +1,7 @@
 import fs from "node:fs";
+import {pEvent} from 'p-event'
 import { readdir, readFile } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { join, relative, basename, format, dirname} from "node:path";
 import crypto from "hypercore-crypto";
 import Multifeed from "multifeed";
 import { ZipFile } from "yazl";
@@ -8,27 +9,34 @@ import { ZipFile } from "yazl";
 /**
  * @param {String} srcPath path to `kappa.db` folder
  * @param {String} [destPath] path file to save
+ * @returns {Promise<String>} OUT
  */
-export default async function MLEFWriter(srcPath, destPath = "output.mlef") {
+export default async function MLEFWriter(srcPath, destPath = "output") {
   const zip = new ZipFile();
   const multi = Multifeed(srcPath, { valueEncoding: "json" });
-  const feedsPath = "docs";
-  const mediaPath = "media";
-
+  const FEEDS_PATH = "docs";
+  const EXTENSION = "mlef";
+  const outPath = destPath === 'output' ? join(dirname(srcPath), destPath) : destPath
+  const OUT = format({ name: outPath , ext: EXTENSION });
   await multiReady(multi);
-  const zipFile = fs.createWriteStream(destPath);
-  zip.outputStream.pipe(zipFile).on("close", function () {
-    console.log(`mlef file writen to ${destPath}`);
-  });
-  const feeds = writeFeeds(multi);
+  const zipFile = fs.createWriteStream(OUT);
+  const onClose = pEvent(zip.outputStream.pipe(zipFile), 'close')
+
   const media = writeAttachments(srcPath);
+  const feeds = writeFeeds(multi);
   for await (const { file, filename } of media) {
-    zip.addBuffer(file, join(mediaPath, filename));
+    zip.addBuffer(file, join(basename(srcPath), filename));
   }
   for await (const { doc, filename } of feeds) {
-    zip.addBuffer(JSON.stringify(doc, null, 4), join(feedsPath, filename));
+    zip.addBuffer(
+      JSON.stringify(doc, null, 4),
+      join(basename(srcPath), FEEDS_PATH, filename),
+    );
   }
+
   zip.end();
+  await onClose
+  return OUT;
 }
 
 async function* writeAttachments(srcPath) {
@@ -51,17 +59,14 @@ async function* writeAttachments(srcPath) {
 async function* writeFeeds(multi) {
   for (const core of multi.feeds()) {
     const stream = core.createReadStream();
-    for await (const fullDoc of stream) {
-      const { created_at, timestamp, ...doc } = fullDoc;
+    for await (const doc of stream) {
       const version = doc.version?.split("@")[1];
+      if (!doc.id) throw new Error("no doc.id on doc");
       // TODO: use better default version than '_'
       // since that first version of doc doesn't haver a version, and second is 0?
       const filename = `${doc.id}@${version || "_"}.json`;
       try {
-        doc.migrationMetadata = await addMigrationMetadata(core, {
-          created_at,
-          timestamp,
-        });
+        doc.migrationMetadata = await addMigrationMetadata(core);
         yield { doc, filename };
       } catch (e) {
         console.error("error creating migration metadata", e);
@@ -71,17 +76,14 @@ async function* writeFeeds(multi) {
 }
 
 /**
- * @param {typeof import('../types/multifeed.d.ts')} core
- * @param {Record<string,unknown>} doc
+ *
  */
-async function addMigrationMetadata(core, doc) {
+async function addMigrationMetadata(core) {
   return {
     rootHashChecksum: crypto.tree(await getRootHash(core)).toString("hex"),
     signature: (await getCoreSignature(core)).toString("hex"),
     coreKey: core.key.toString("hex"),
     blockIndex: core.length,
-    created_at: doc.created_at,
-    timestamp: doc.timestamp,
   };
 }
 
