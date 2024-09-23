@@ -1,8 +1,6 @@
 import MLEFReader from '../src/reader.js'
 
 const path = new URL('./fixture/db1.mlef', import.meta.url).pathname
-reader = MLEFReader(path)
-
-for await(const {attachments, docs} of reader){
-}
+const reader = await MLEFReader(path)
+//console.log(reader.attachments)
 
