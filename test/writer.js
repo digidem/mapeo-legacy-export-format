@@ -1,8 +1,8 @@
 import test from "node:test";
+import assert from "node:assert/strict";
+import fs from 'node:fs/promises'
 import { join, relative, basename } from 'node:path'
 import { json } from 'node:stream/consumers';
-import fs from 'node:fs/promises'
-import assert from "node:assert/strict";
 import yauzl from 'yauzl-promise'
 import mime from 'mime/lite';
 import MLEFWriter from "../src/writer.js";
@@ -27,9 +27,12 @@ test("loading and packing a db into a zip", async (t) => {
   .filter(p => p.isFile())
   .map(p => relative(path,join(p.path, p.name)))
 
-  // TODO: on db there are several cores, just by looking at that fixture I know data is on '1', but that is not robust...
-  const docs = (await fs.readFile(join(path, '1', 'data')))
-  .toString('utf-8')
+  const dataPromises = (await fs.readdir(path, {recursive: true, withFileTypes:true}))
+  // read all files called 'data', which contain json lines
+  .filter(p => join(p.path,p.name).match(/data/))
+  .map(async (p) => await fs.readFile(join(p.path, p.name)))
+
+  const docs = (await Promise.all(dataPromises)).toString('utf-8')
   .split('\n')
   .filter(s => s.length !== 0)
   .map((s) => JSON.parse(s))
