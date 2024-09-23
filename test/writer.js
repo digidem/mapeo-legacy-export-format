@@ -1,10 +1,15 @@
 import test from "node:test";
-import { join, relative } from 'node:path'
+import { join, relative, basename } from 'node:path'
 import { json } from 'node:stream/consumers';
 import fs from 'node:fs/promises'
 import assert from "node:assert/strict";
 import yauzl from 'yauzl-promise'
+import mime from 'mime/lite';
 import MLEFWriter from "../src/writer.js";
+
+// add testing of links of docs to attachments
+// 1. if there's a ref, check that file exists (on the three folders?)
+// 2. check that there is no image unreferenced? (not that important)
 
 test("loading and packing a db into a zip", async (t) => {
   const dbName = 'db1'
@@ -53,6 +58,17 @@ test("loading and packing a db into a zip", async (t) => {
     docsInZip,
     docs,
     'the docs zipped matches the original'
+  )
+
+  const attachmentsRef = docsInZip.flatMap(doc => doc.attachments)
+  const attachmentsInZipAsRefs = attachmentsInZip
+  .filter(attachment => attachment.match(/original/))
+  .map(attachment => ({ id: basename(attachment), type: mime.getType(attachment) }))
+
+  assert.deepEqual(
+    new Set(attachmentsRef),
+    new Set(attachmentsInZipAsRefs),
+    'references to attachments in docs link to images that exist'
   )
 
   t.after(async () => {
