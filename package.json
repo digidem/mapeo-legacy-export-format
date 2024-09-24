@@ -6,7 +6,10 @@
   "main": "index.js",
   "scripts": {
     "test": "node --test test",
-    "patch": "patch-package simple-hypercore-protocol"
+    "patch": "patch-package simple-hypercore-protocol",
+    "tsc": "tsc",
+    "prettier": "prettier --check .",
+    "lint": "eslint --cache ."
   },
   "keywords": [],
   "author": "",
@@ -17,6 +20,29 @@
     "yazl": "^2.5.1"
   },
   "devDependencies": {
-    "patch-package": "^8.0.0"
+    "@types/node": "^22.5.5",
+    "@types/yazl": "^2.4.5",
+    "eslint": "^8.46.0",
+    "patch-package": "^8.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.6.2"
+  },
+  "eslintConfig": {
+    "env": {
+      "commonjs": true,
+      "es2021": true,
+      "node": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+      "ecmaVersion": "latest",
+      "sourceType": "module"
+    },
+    "rules": {}
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "es5"
   }
 }
