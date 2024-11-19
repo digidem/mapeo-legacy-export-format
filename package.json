@@ -1,8 +1,8 @@
 {
   "name": "mapeo-legacy-export-format",
+  "private": true,
   "type": "module",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
     "patch": "patch-package simple-hypercore-protocol",
@@ -13,9 +13,7 @@
     "test:node": "node --test",
     "test": "npm-run-all --aggregate-output --print-label --parallel test:*"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "hypercore-crypto": "^3.4.2",
     "multifeed": "^6.0.0",
