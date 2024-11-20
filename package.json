@@ -11,7 +11,9 @@
     "test:eslint": "eslint --cache .",
     "test:typescript": "tsc",
     "test:node": "node --test",
-    "test": "npm-run-all --aggregate-output --print-label --parallel test:*"
+    "test": "npm-run-all --aggregate-output --print-label --parallel test:*",
+    "watch:test:typescript": "tsc --watch --project ./tsconfig.dev.json",
+    "watch:test:node": "npm run test:node -- --watch"
   },
   "license": "MIT",
   "dependencies": {
