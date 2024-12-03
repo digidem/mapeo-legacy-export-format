@@ -1,141 +1,168 @@
+import archiver from 'archiver'
+import * as hypercoreCrypto from 'hypercore-crypto'
+import multifeed from 'multifeed'
 import fs from 'node:fs'
+import { readdir } from 'node:fs/promises'
+import * as path from 'node:path'
 import { pEvent } from 'p-event'
-import { readdir, readFile } from 'node:fs/promises'
-import { join, relative, basename, format, dirname } from 'node:path'
-import crypto from 'hypercore-crypto'
-import Multifeed from 'multifeed'
-import { ZipFile } from 'yazl'
+import * as hypercoreUtil from './lib/hypercoreUtil.js'
+import * as multifeedUtil from './lib/multifeedUtil.js'
+import { noop } from './lib/noop.js'
+/** @import { Hypercore } from 'hypercore' */
 
 /**
- * @param {String} srcPath path to `kappa.db` folder
- * @param {String} [destPath] path file to save
- * @returns {Promise<String>} OUT
+ * TODO move this elsewhere?
+ * @typedef {object} HypercoreMetadata
+ * @prop {string} rootHashChecksum
+ * @prop {string} signature
+ * @prop {string} coreKey
+ * @prop {number} blockIndex
  */
-export default async function MLEFWriter(srcPath, destPath = 'output') {
-  const zip = new ZipFile()
-  const multi = Multifeed(srcPath, { valueEncoding: 'json' })
-  const FEEDS_PATH = 'docs'
-  const EXTENSION = 'mlef'
-  const outPath =
-    destPath === 'output' ? join(dirname(srcPath), destPath) : destPath
-  const OUT = format({ name: outPath, ext: EXTENSION })
-  await multiReady(multi)
-  const zipFile = fs.createWriteStream(OUT)
-  const onClose = pEvent(zip.outputStream.pipe(zipFile), 'close')
 
-  const media = writeAttachments(srcPath)
-  const feeds = writeFeeds(multi)
-  for await (const { file, filename } of media) {
-    zip.addBuffer(file, join(basename(srcPath), filename))
+/**
+ * @param {string} inputPath path to `kappa.db` folder
+ * @param {string} outputPath path of file to save
+ * @returns {Promise<void>}
+ */
+export async function write(inputPath, outputPath) {
+  const output = fs.createWriteStream(outputPath)
+  const archive = archiver('zip', { zlib: { level: 9 } })
+
+  let throwArchiveErrorIfExists = noop
+  /** @param {Error} err */
+  const onArchiveError = (err) => {
+    throwArchiveErrorIfExists = () => {
+      throw err
+    }
+    archive.off('warning', onArchiveError)
+    archive.off('error', onArchiveError)
   }
-  for await (const { doc, filename } of feeds) {
-    zip.addBuffer(
-      JSON.stringify(doc, null, 4),
-      join(basename(srcPath), FEEDS_PATH, filename)
-    )
+  archive.once('warning', onArchiveError)
+  archive.once('error', onArchiveError)
+
+  archive.pipe(output)
+
+  throwArchiveErrorIfExists()
+
+  for await (const document of getInputDocuments(inputPath)) {
+    throwArchiveErrorIfExists()
+
+    const dirname = `docs/${document.id.slice(0, 2)}/${document.id}`
+    const basename = `${document.version || '_'}.json`
+    archive.append(JSON.stringify(document), {
+      name: `${dirname}/${basename}`,
+    })
   }
 
-  zip.end()
-  await onClose
-  return OUT
+  const inputMediaPaths = await getInputMediaPaths(inputPath)
+  throwArchiveErrorIfExists()
+  for (const inputMediaPath of inputMediaPaths) {
+    archive.file(inputMediaPath, {
+      name: path.relative(inputPath, inputMediaPath),
+    })
+  }
+
+  const onOutputClosePromise = pEvent(output, 'close')
+  archive.finalize()
+  throwArchiveErrorIfExists()
+  await onOutputClosePromise
 }
 
-async function* writeAttachments(srcPath) {
-  const mediaDir = await readdir(join(srcPath, 'media'), {
+/**
+ * @typedef {object} InputDocument
+ * @prop {string} id
+ * @prop {null | string} version
+ * @prop {unknown} document
+ * @prop {HypercoreMetadata} hypercoreMetadata
+ */
+
+/**
+ * @param {string} inputPath
+ * @returns {AsyncGenerator<InputDocument>}
+ */
+async function* getInputDocuments(inputPath) {
+  const multi = multifeed(inputPath, {
+    createIfMissing: false,
+    valueEncoding: 'json',
+    stats: false,
+  })
+  await multifeedUtil.ready(multi)
+
+  for (const hypercore of multi.feeds()) {
+    await hypercoreUtil.ready(hypercore)
+    if (hypercore.length === 0) continue
+
+    const stream = hypercore.createReadStream()
+
+    const hypercoreMetadata = await getHypercoreMetadata(hypercore)
+
+    for await (const document of stream) {
+      const { id, version } = parseDocument(document)
+      yield { id, version, document, hypercoreMetadata }
+    }
+  }
+}
+
+/**
+ * @param {Hypercore} hypercore
+ * @returns {Promise<HypercoreMetadata>}
+ */
+async function getHypercoreMetadata(hypercore) {
+  const rootHashesPromise = hypercoreUtil.rootHashes(hypercore, 0)
+  const signaturePromise = hypercoreUtil.signature(
+    hypercore,
+    Math.max(0, hypercore.length - 1)
+  )
+  return {
+    rootHashChecksum: hypercoreCrypto
+      .tree(await rootHashesPromise)
+      .toString('hex'),
+    signature: (await signaturePromise).toString('hex'),
+    coreKey: hypercore.key.toString('hex'),
+    blockIndex: hypercore.length,
+  }
+}
+
+/**
+ * @param {unknown} document
+ * @returns {{ id: string, version: null | string }}
+ */
+function parseDocument(document) {
+  if (typeof document !== 'object' || document === null) {
+    throw new Error('document is not an object')
+  }
+
+  if (!('id' in document) || typeof document.id !== 'string') {
+    throw new Error('document.id is not a string')
+  }
+
+  /** @type {null | string} */ let version = null
+  if (
+    'version' in document &&
+    document.version &&
+    typeof document.version === 'string'
+  ) {
+    version = document.version
+  }
+
+  return {
+    id: document.id,
+    version,
+  }
+}
+
+/**
+ * @param {string} inputPath
+ * @returns {Promise<Array<string>>}
+ */
+async function getInputMediaPaths(inputPath) {
+  const inputMediaRootPath = path.join(inputPath, 'media')
+  const inputMediaAllFiles = await readdir(inputMediaRootPath, {
     recursive: true,
     withFileTypes: true,
   })
-  for (const fileOrDir of mediaDir) {
-    if (fileOrDir.isFile()) {
-      const file = await readFile(join(fileOrDir.parentPath, fileOrDir.name))
-      const filename = join(
-        relative(srcPath, fileOrDir.parentPath),
-        fileOrDir.name
-      )
-      yield { filename, file }
-    }
-  }
-}
-
-async function* writeFeeds(multi) {
-  for (const core of multi.feeds()) {
-    const stream = core.createReadStream()
-    for await (const doc of stream) {
-      const version = doc.version?.split('@')[1]
-      if (!doc.id) throw new Error('no doc.id on doc')
-      // TODO: use better default version than '_'
-      // since that first version of doc doesn't haver a version, and second is 0?
-      const filename = `${doc.id}@${version || '_'}.json`
-      try {
-        doc.migrationMetadata = await addMigrationMetadata(core)
-        yield { doc, filename }
-      } catch (e) {
-        console.error('error creating migration metadata', e)
-      }
-    }
-  }
-}
-
-/**
- *
- */
-async function addMigrationMetadata(core) {
-  return {
-    rootHashChecksum: crypto.tree(await getRootHash(core)).toString('hex'),
-    signature: (await getCoreSignature(core)).toString('hex'),
-    coreKey: core.key.toString('hex'),
-    blockIndex: core.length,
-  }
-}
-
-/**
- * @param {typeof import('multifeed')} multi
- * @returns {Promise<void>}
- */
-function multiReady(multi) {
-  return new Promise((resolve) => {
-    // TODO: ready cb returns two params: a num and a function...
-    multi.ready(() => {
-      //if(err) return reject(err)
-      resolve()
-    })
-  })
-}
-
-/**
- * @param {import('../types/multifeed.d.ts')} core
- * @returns {Promise<Buffer>}
- */
-function getCoreSignature(core) {
-  return new Promise((resolve, reject) => {
-    core.signature(
-      /** @param {Error} err
-       *  @param {{signature: Buffer}} sig
-       */
-      (err, sig) => {
-        if (err) return reject(err)
-        resolve(sig.signature)
-      }
-    )
-  })
-}
-
-/**
- * @param {typeof import('../types/multifeed.d.ts')} core
- * @returns {Promise<Buffer>}
- */
-function getRootHash(core) {
-  return new Promise((resolve, reject) => {
-    core.rootHashes(
-      0,
-      /**
-       * @param {Error} err
-       * @param {Buffer} roots
-       */
-      (err, roots) => {
-        if (err) return reject(err)
-        resolve(roots)
-      }
-    )
-  })
+  const inputMediaFiles = inputMediaAllFiles.filter((dirent) => dirent.isFile())
+  return inputMediaFiles.map((dirent) =>
+    path.join(dirent.parentPath, dirent.name)
+  )
 }

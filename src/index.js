@@ -1,1 +1,1 @@
-export { default as MLEFWriter } from './writer.js'
+export { write } from './writer.js'
