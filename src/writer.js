@@ -116,7 +116,7 @@ async function getHypercoreMetadata(hypercore) {
     rootHashChecksum: hypercoreCrypto
       .tree(await rootHashesPromise)
       .toString('hex'),
-    signature: (await signaturePromise).toString('hex'),
+    signature: (await signaturePromise).signature.toString('hex'),
     coreKey: hypercore.key.toString('hex'),
     blockIndex: hypercore.length,
   }

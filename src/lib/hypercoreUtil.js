@@ -44,16 +44,15 @@ export const rootHashes = (hypercore, index) =>
  *
  * @param {Hypercore} hypercore
  * @param {number} index
- * @returns {Promise<Buffer>}
+ * @returns {Promise<{ index: number, signature: Buffer }>}
  */
 export const signature = (hypercore, index) =>
   new Promise((resolve, reject) => {
-    hypercore.signature(index, (err, sig) => {
+    hypercore.signature(index, (err, signature) => {
       if (err) {
         reject(err)
       } else {
-        // TODO: This wrapper does a little too much here
-        resolve(sig.signature)
+        resolve(signature)
       }
     })
   })

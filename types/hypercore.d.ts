@@ -2,11 +2,6 @@
  * This is a subset of the types we actually use, so lots of things are missing.
  */
 declare module 'hypercore' {
-  type SignatureCallback = (
-    err: null | Error,
-    { index: number, signature: Buffer }
-  ) => unknown
-
   export class Hypercore {
     get key(): Buffer
     get length(): number
@@ -15,8 +10,13 @@ declare module 'hypercore' {
 
     createReadStream(): AsyncIterable<unknown>
 
-    signature(cb: SignatureCallback): void
-    signature(index: number, cb: SignatureCallback): void
+    signature(
+      index: number,
+      cb: (
+        err: null | Error,
+        signature: { index: number; signature: Buffer }
+      ) => unknown
+    ): void
 
     rootHashes(
       index: number,
