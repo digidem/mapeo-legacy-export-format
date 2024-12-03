@@ -1,3 +1,6 @@
+/**
+ * This is a subset of the types we actually use, so lots of things are missing.
+ */
 declare module 'hypercore-crypto' {
   export function discoveryKey(publicKey: Buffer): Buffer
 

@@ -11,15 +11,6 @@ import { noop } from './lib/noop.js'
 /** @import { Hypercore } from 'hypercore' */
 
 /**
- * TODO move this elsewhere?
- * @typedef {object} HypercoreMetadata
- * @prop {string} rootHashChecksum
- * @prop {string} signature
- * @prop {string} coreKey
- * @prop {number} blockIndex
- */
-
-/**
  * @param {string} inputPath path to `kappa.db` folder
  * @param {string} outputPath path of file to save
  * @returns {Promise<void>}
@@ -67,6 +58,14 @@ export async function write(inputPath, outputPath) {
   throwArchiveErrorIfExists()
   await onOutputClosePromise
 }
+
+/**
+ * @typedef {object} HypercoreMetadata
+ * @prop {string} rootHashChecksum
+ * @prop {string} signature
+ * @prop {string} coreKey
+ * @prop {number} blockIndex
+ */
 
 /**
  * @typedef {object} InputDocument

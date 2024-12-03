@@ -6,13 +6,10 @@
  */
 export const ready = (multifeed) =>
   new Promise((resolve, reject) => {
-    // TODO: Clean up these listeners
-
-    multifeed.once('error', (err) => {
-      reject(err)
-    })
+    multifeed.once('error', reject)
 
     multifeed.ready(() => {
+      multifeed.off('error', reject)
       resolve()
     })
   })
