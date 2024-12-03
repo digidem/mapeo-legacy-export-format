@@ -1,3 +1,15 @@
+/**
+ * This is a subset of the types we actually use, so lots of things are missing.
+ */
 declare module 'multifeed' {
-  export function ready(Function)
+  import { Hypercore } from 'hypercore'
+  import { EventEmitter } from 'node:events'
+
+  export class Multifeed extends EventEmitter {
+    ready(cb: () => unknown): void
+    close(cb?: (err: unknown) => unknown): void
+    feeds(): Hypercore[]
+  }
+
+  export default function multifeed(storage: string, opts?: unknown): Multifeed
 }
