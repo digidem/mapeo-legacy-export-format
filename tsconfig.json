@@ -29,6 +29,6 @@
     "typeRoots": ["node_modules/@types"],
     "useUnknownInCatchVariables": true
   },
-  "include": ["src/*.js", "types/*"],
+  "include": ["src", "test", "types"],
   "exclude": ["node_modules"]
 }

@@ -55,7 +55,7 @@ test('includes all versions of documents', async (t) => {
   for await (const entry of zip) {
     if (!entry.filename.startsWith('docs/')) continue
     const data = await readYauzlEntry(entry)
-    const doc = JSON.parse(data)
+    const doc = JSON.parse(data.toString('utf8'))
     if (doc.id === FIXTURE_DOC_ID) docsMatchingFixture.push(doc)
   }
 
@@ -113,7 +113,7 @@ const readYauzlEntry = async (entry) => buffer(await entry.openReadStream())
 /**
  * @param {{ version: null | string }} a
  * @param {{ version: null | string }} b
- * @returns {-1 | 1}
+ * @returns {number}
  */
 const versionIdSort = (a, b) => {
   if (a.version === null) return -1
