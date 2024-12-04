@@ -9,6 +9,7 @@ import * as hypercoreUtil from './lib/hypercoreUtil.js'
 import * as multifeedUtil from './lib/multifeedUtil.js'
 import { noop } from './lib/noop.js'
 /** @import { Hypercore } from 'hypercore' */
+/** @import { HypercoreMetadata, DocumentVersion } from './types.js' */
 
 /**
  * @param {string} inputPath path to `kappa.db` folder
@@ -60,24 +61,8 @@ export async function write(inputPath, outputPath) {
 }
 
 /**
- * @typedef {object} HypercoreMetadata
- * @prop {string} rootHashChecksum
- * @prop {string} signature
- * @prop {string} coreKey
- * @prop {number} blockIndex
- */
-
-/**
- * @typedef {object} InputDocument
- * @prop {string} id
- * @prop {null | string} version
- * @prop {unknown} document
- * @prop {HypercoreMetadata} hypercoreMetadata
- */
-
-/**
  * @param {string} inputPath
- * @returns {AsyncGenerator<InputDocument>}
+ * @returns {AsyncGenerator<DocumentVersion>}
  */
 async function* getInputDocuments(inputPath) {
   const multi = multifeed(inputPath, {
