@@ -7,10 +7,6 @@ import { temporaryFile } from 'tempy'
 import yauzl from 'yauzl-promise'
 import { write } from '../src/index.js'
 
-// add testing of links of docs to attachments
-// 1. if there's a ref, check that file exists (on the three folders?)
-// 2. check that there is no image unreferenced? (not that important)
-
 const FIXTURE_PATH = new URL('./fixture/db1', import.meta.url).pathname
 const FIXTURE_DOC_ID = '74cb70988a17b6e4'
 const FIXTURE_MEDIA_PATHS = [
