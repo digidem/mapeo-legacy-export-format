@@ -1,14 +1,20 @@
 {
   "name": "@mapeo/legacy-export-format",
-  "private": true,
+  "description": "reading and writing legacy Mapeo data archives",
   "type": "module",
-  "version": "1.0.0",
+  "version": "0.0.0",
+  "homepage": "https://github.com/digidem/mapeo-legacy-export-format",
+  "bugs": "https://github.com/digidem/mapeo-legacy-export-format/issues",
+  "author": "Awana Digital (https://awana.digital)",
+  "repository": "github:digidem/mapeo-legacy-export-format",
   "exports": {
     "import": "./src/index.js",
     "types": "./dist/src/index.d.ts"
   },
   "files": [
     "README.md",
+    "LICENSE.md",
+    "patches",
     "src",
     "dist/src"
   ],
