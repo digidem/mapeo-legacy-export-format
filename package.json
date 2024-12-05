@@ -42,18 +42,18 @@
     "yauzl-promise": "^4.0.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.15.0",
+    "@eslint/js": "^9.16.0",
     "@types/archiver": "^6.0.3",
     "@types/node": "^22.9.1",
     "@types/yauzl-promise": "^4.0.1",
     "@types/yazl": "^2.4.5",
-    "eslint": "^9.15.0",
-    "globals": "^15.12.0",
+    "eslint": "^9.16.0",
+    "globals": "^15.13.0",
     "npm-run-all": "^4.1.5",
     "prettier": "^3.3.3",
     "tempy": "^3.1.0",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.15.0"
+    "typescript-eslint": "^8.17.0"
   },
   "engines": {
     "node": "^20.18.1",
