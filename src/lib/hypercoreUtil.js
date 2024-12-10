@@ -14,6 +14,24 @@ export const ready = async (hypercore) => {
 }
 
 /**
+ * Wraps `Hypercore.prototype.get` in a promise.
+ *
+ * @param {Hypercore} hypercore
+ * @param {number} index
+ * @returns {Promise<unknown>}
+ */
+export const get = async (hypercore, index) =>
+  new Promise((resolve, reject) => {
+    hypercore.get(index, (err, block) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(block)
+      }
+    })
+  })
+
+/**
  * Wraps `Hypercore.prototype.rootHashes` in a promise.
  *
  * @param {Hypercore} hypercore
