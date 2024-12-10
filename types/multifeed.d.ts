@@ -11,5 +11,9 @@ declare module 'multifeed' {
     feeds(): Hypercore[]
   }
 
-  export default function multifeed(storage: string, opts?: unknown): Multifeed
+  export default function multifeed(
+    hypercore: () => Hypercore,
+    storage: string,
+    opts?: unknown
+  ): Multifeed
 }

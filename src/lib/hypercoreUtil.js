@@ -1,21 +1,17 @@
+import { pEvent } from 'p-event'
 /** @import { Hypercore } from 'hypercore' */
 
 /**
- * Wraps `Hypercore.prototype.ready` in a promise.
+ * Waits for a Hypercore to be ready.
  *
  * @param {Hypercore} hypercore
  * @returns {Promise<void>}
  */
-export const ready = (hypercore) =>
-  new Promise((resolve, reject) => {
-    hypercore.ready((err) => {
-      if (err) {
-        reject(err)
-      } else {
-        resolve()
-      }
-    })
-  })
+export const ready = async (hypercore) => {
+  const isReady = Boolean(hypercore.key)
+  if (isReady) return
+  await pEvent(hypercore, 'ready')
+}
 
 /**
  * Wraps `Hypercore.prototype.rootHashes` in a promise.

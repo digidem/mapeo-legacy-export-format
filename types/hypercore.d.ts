@@ -2,13 +2,13 @@
  * This is a subset of the types we actually use, so lots of things are missing.
  */
 declare module 'hypercore' {
-  export class Hypercore {
-    get key(): Buffer
+  import { EventEmitter } from 'node:events'
+
+  export class Hypercore extends EventEmitter {
+    get key(): null | Buffer
     get length(): number
 
-    ready(cb: (err: null | Error) => unknown): void
-
-    createReadStream(): AsyncIterable<unknown>
+    createReadStream(): NodeJS.ReadableStream
 
     signature(
       index: number,
@@ -26,4 +26,6 @@ declare module 'hypercore' {
       ) => unknown
     ): void
   }
+
+  export default function hypercore(...args: unknown[]): Hypercore
 }

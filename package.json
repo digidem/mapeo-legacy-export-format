@@ -14,12 +14,10 @@
   "files": [
     "README.md",
     "LICENSE.md",
-    "patches",
     "src",
     "dist/src"
   ],
   "scripts": {
-    "postinstall": "patch-package",
     "prepack": "npm run build",
     "format": "prettier --write .",
     "build": "tsc",
@@ -34,10 +32,10 @@
   "license": "MIT",
   "dependencies": {
     "archiver": "^7.0.1",
+    "hypercore": "^7.7.1",
     "hypercore-crypto": "^3.4.2",
-    "multifeed": "^6.0.0",
+    "multifeed": "^4.3.0",
     "p-event": "^6.0.1",
-    "patch-package": "^8.0.0",
     "valibot": "^1.0.0-beta.9",
     "yauzl-promise": "^4.0.0"
   },
