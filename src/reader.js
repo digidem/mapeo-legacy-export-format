@@ -2,18 +2,11 @@ import { buffer } from 'node:stream/consumers'
 import * as v from 'valibot'
 import yauzl from 'yauzl-promise'
 import { DocumentVersionSchema } from './types.js'
-/** @import { DocumentVersion } from './types.js' */
+/** @import { Document, DocumentVersion } from './types.js' */
 
 /**
  * @internal
  * @typedef {Map<string, yauzl.Entry>} EntriesByFilename
- */
-
-/**
- * @internal
- * @typedef {object} Document
- * @prop {string} id
- * @prop {Array<DocumentVersion>} versions
  */
 
 /**
