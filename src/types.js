@@ -27,3 +27,9 @@ export const DocumentVersionSchema = v.object({
     blockIndex: v.number(),
   }),
 })
+
+/**
+ * @typedef {object} Document
+ * @prop {string} id
+ * @prop {Array<DocumentVersion>} versions
+ */
