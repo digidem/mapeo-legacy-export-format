@@ -1,5 +1,6 @@
 import archiver from 'archiver'
 import * as hypercoreCrypto from 'hypercore-crypto'
+import hypercore from 'hypercore'
 import multifeed from 'multifeed'
 import fs from 'node:fs'
 import { readdir } from 'node:fs/promises'
@@ -7,6 +8,7 @@ import * as path from 'node:path'
 import { pEvent } from 'p-event'
 import * as hypercoreUtil from './lib/hypercoreUtil.js'
 import * as multifeedUtil from './lib/multifeedUtil.js'
+import { readableStreamToAsyncIterable } from './lib/readableStreamToAsyncIterable.js'
 import { noop } from './lib/noop.js'
 /** @import { Hypercore } from 'hypercore' */
 /** @import { HypercoreMetadata, DocumentVersion } from './types.js' */
@@ -65,7 +67,7 @@ export async function write(inputPath, outputPath) {
  * @returns {AsyncGenerator<DocumentVersion>}
  */
 async function* getInputDocuments(inputPath) {
-  const multi = multifeed(inputPath, {
+  const multi = multifeed(hypercore, inputPath, {
     createIfMissing: false,
     valueEncoding: 'json',
     stats: false,
@@ -80,7 +82,7 @@ async function* getInputDocuments(inputPath) {
 
     const hypercoreMetadata = await getHypercoreMetadata(hypercore)
 
-    for await (const document of stream) {
+    for await (const document of readableStreamToAsyncIterable(stream)) {
       const { id, version } = parseDocument(document)
       yield { id, version, document, hypercoreMetadata }
     }
@@ -92,11 +94,18 @@ async function* getInputDocuments(inputPath) {
  * @returns {Promise<HypercoreMetadata>}
  */
 async function getHypercoreMetadata(hypercore) {
+  await hypercoreUtil.ready(hypercore)
+
+  if (!hypercore.key) {
+    throw new Error("Hypercore is missing a key even though it's ready")
+  }
+
   const rootHashesPromise = hypercoreUtil.rootHashes(hypercore, 0)
   const signaturePromise = hypercoreUtil.signature(
     hypercore,
     Math.max(0, hypercore.length - 1)
   )
+
   return {
     rootHashChecksum: hypercoreCrypto
       .tree(await rootHashesPromise)
