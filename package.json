@@ -2,7 +2,7 @@
   "name": "@mapeo/legacy-export-format",
   "description": "reading and writing legacy Mapeo data archives",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "homepage": "https://github.com/digidem/mapeo-legacy-export-format",
   "bugs": "https://github.com/digidem/mapeo-legacy-export-format/issues",
   "author": "Awana Digital (https://awana.digital)",
