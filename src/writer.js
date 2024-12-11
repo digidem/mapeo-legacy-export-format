@@ -8,7 +8,6 @@ import * as path from 'node:path'
 import { pEvent } from 'p-event'
 import * as hypercoreUtil from './lib/hypercoreUtil.js'
 import * as multifeedUtil from './lib/multifeedUtil.js'
-import { readableStreamToAsyncIterable } from './lib/readableStreamToAsyncIterable.js'
 import { noop } from './lib/noop.js'
 /** @import { Hypercore } from 'hypercore' */
 /** @import { HypercoreMetadata, DocumentVersion } from './types.js' */
@@ -78,20 +77,26 @@ async function* getInputDocuments(inputPath) {
     await hypercoreUtil.ready(hypercore)
     if (hypercore.length === 0) continue
 
-    const stream = hypercore.createReadStream()
-
     const hypercoreMetadata = await getHypercoreMetadata(hypercore)
 
-    for await (const document of readableStreamToAsyncIterable(stream)) {
-      const { id, version } = parseDocument(document)
-      yield { id, version, document, hypercoreMetadata }
+    for (let i = 0; i < hypercore.length; i++) {
+      const document = await hypercoreUtil.get(hypercore, i)
+      yield {
+        id: parseId(document),
+        version: makeVersion(hypercoreMetadata.coreKey, i),
+        document,
+        hypercoreMetadata: {
+          ...hypercoreMetadata,
+          blockIndex: i,
+        },
+      }
     }
   }
 }
 
 /**
  * @param {Hypercore} hypercore
- * @returns {Promise<HypercoreMetadata>}
+ * @returns {Promise<Omit<HypercoreMetadata, 'blockIndex'>>}
  */
 async function getHypercoreMetadata(hypercore) {
   await hypercoreUtil.ready(hypercore)
@@ -112,37 +117,29 @@ async function getHypercoreMetadata(hypercore) {
       .toString('hex'),
     signature: (await signaturePromise).signature.toString('hex'),
     coreKey: hypercore.key.toString('hex'),
-    blockIndex: hypercore.length,
   }
 }
 
 /**
  * @param {unknown} document
- * @returns {{ id: string, version: null | string }}
+ * @returns {string}
  */
-function parseDocument(document) {
+function parseId(document) {
   if (typeof document !== 'object' || document === null) {
     throw new Error('document is not an object')
   }
-
   if (!('id' in document) || typeof document.id !== 'string') {
     throw new Error('document.id is not a string')
   }
-
-  /** @type {null | string} */ let version = null
-  if (
-    'version' in document &&
-    document.version &&
-    typeof document.version === 'string'
-  ) {
-    version = document.version
-  }
-
-  return {
-    id: document.id,
-    version,
-  }
+  return document.id
 }
+
+/**
+ * @param {string} coreKey
+ * @param {number} blockIndex
+ * @returns {string}
+ */
+const makeVersion = (coreKey, blockIndex) => coreKey + '@' + blockIndex
 
 /**
  * @param {string} inputPath

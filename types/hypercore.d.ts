@@ -8,7 +8,7 @@ declare module 'hypercore' {
     get key(): null | Buffer
     get length(): number
 
-    createReadStream(): NodeJS.ReadableStream
+    get(index: number, cb: (err: null | Error, block: unknown) => unknown): void
 
     signature(
       index: number,
