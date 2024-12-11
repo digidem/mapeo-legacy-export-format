@@ -50,7 +50,10 @@ test('can read everything', async (t) => {
       case DOC_WITH_VERSIONS_ID: {
         assert.equal(document.versions.length, 3, 'expected 3 versions')
         const [doc1, doc2, doc3] = /** @type {any} */ (document.versions)
-        assert.equal(doc1.version, '54aef99c451b09d15f9a3e8f0059fe8d5a97ee2b2f0cb605e3f04153c5723012@0')
+        assert.equal(
+          doc1.version,
+          '54aef99c451b09d15f9a3e8f0059fe8d5a97ee2b2f0cb605e3f04153c5723012@0'
+        )
         assert.equal(doc1.document.tags.notes, 'Nada')
         assert.equal(
           doc2.version,
